@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Вопрос {{ index }} — {{ quiz.title }}{% endblock %}
+{% block page_id %}question{% endblock %}
+{% block head_extra %}
+<meta name="play-code" content="{{ quiz.published_link }}">
+<meta name="question-index" content="{{ index }}">
+<meta name="timer-remaining" content="{{ remaining_initial }}">
+<meta name="timer-mode" content="{{ timer_mode }}">
+{% endblock %}
+{% block content %}
+<div class="question-layout fade-in" data-play-code="{{ quiz.published_link }}" data-q-index="{{ index }}" data-initial-remaining="{{ remaining_initial }}" data-timer-total="{{ timer_total_seconds }}">
+  {% if feedback == 'correct' %}
+  <div class="alert alert-success show">Предыдущий ответ верный.</div>
+  {% elif feedback == 'wrong' %}
+  <div class="alert alert-warn show">Предыдущий ответ неверный или время вышло.</div>
+  {% endif %}
+  <div class="question-top">
+    <p class="muted progress-label">Вопрос {{ index }} из {{ total }}</p>
+    <div class="timer-wrap" id="timerRoot">
+      <svg class="timer-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="timer-track" cx="60" cy="60" r="52" fill="none" stroke-width="8"></circle>
+        <circle class="timer-progress" id="timerArc" cx="60" cy="60" r="52" fill="none" stroke-width="8" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+      </svg>
+      <div class="timer-center">
+        <span class="timer-digits input-mono" id="timerDigits">{{ (remaining_initial + 0.5)|int }}</span>
+        <span class="timer-unit">сек</span>
+      </div>
+    </div>
+  </div>
+  <form method="post" action="/play/{{ quiz.published_link }}/submit" class="card card-glass question-form" id="playForm" data-validate="play-answer">
+    <input type="hidden" name="question_id" value="{{ question.id }}">
+    <input type="hidden" name="question_index" value="{{ index }}">
+    <h2 class="question-title">{{ question.text }}</h2>
+    {% if question.question_type.value == 'text_input' %}
+    <label class="field">
+      <span class="field-label">Ваш ответ</span>
+      <input type="text" name="text_answer" class="input input-lg" autocomplete="off">
+    </label>
+    {% elif question.question_type.value == 'single_choice' %}
+    <div class="options-list">
+      {% for o in options %}
+      <label class="option-card">
+        <input type="radio" name="option_id" value="{{ o.id }}" class="sr-only">
+        <span class="option-body">{{ o.text }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="options-list">
+      {% for o in options %}
+      <label class="option-card">
+        <input type="checkbox" name="opt_{{ o.id }}" class="sr-only">
+        <span class="option-body"><i class="fa-regular fa-square-check opt-icon" aria-hidden="true"></i> {{ o.text }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="form-actions-row">
+      <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn">Ответить</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.title }} — игра{% endblock %}
+{% block page_id %}play-start{% endblock %}
+{% block content %}
+<div class="narrow fade-in">
+  <article class="card card-glass play-intro">
+    <h1 class="page-title">{{ quiz.title }}</h1>
+    <p class="lead">{{ quiz.description }}</p>
+    {% if errors.password %}
+    <div class="alert alert-error show">{{ errors.password }}</div>
+    {% endif %}
+    <form method="post" action="/play/{{ quiz.published_link }}/start" class="form-stack" data-validate="play-start">
+      <label class="field">
+        <span class="field-label">Ваше имя <span class="muted">(необязательно)</span></span>
+        <input type="text" name="participant_name" class="input" maxlength="200" autocomplete="name" placeholder="Например, Анна">
+      </label>
+      {% if quiz.access_type.value == 'password' %}
+      <label class="field">
+        <span class="field-label">Пароль викторины</span>
+        <input type="password" name="access_password" class="input" required autocomplete="off">
+      </label>
+      {% endif %}
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Начать</button>
+    </form>
+  </article>
+</div>
+{% endblock %}

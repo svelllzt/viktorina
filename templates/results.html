@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Результат — {{ quiz.title }}{% endblock %}
+{% block page_id %}results{% endblock %}
+{% block content %}
+<div class="narrow fade-in">
+  <section class="card card-glass results-hero">
+    <h1 class="page-title">Готово</h1>
+    <p class="results-score"><span class="score-num input-mono">{{ attempt.score }}</span> <span class="muted">из</span> <span class="score-max input-mono">{{ attempt.max_score }}</span></p>
+    <p class="results-pct">Точность: <strong>{{ pct }}%</strong></p>
+  </section>
+  {% if quiz.show_final_results %}
+  <section class="card card-glass results-table-wrap">
+    <h2 class="section-title">По вопросам</h2>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr><th>Вопрос</th><th>Результат</th></tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.question.text[:80] }}{% if row.question.text|length > 80 %}…{% endif %}</td>
+            <td>
+              {% if row.answer %}
+                {% if row.answer.is_correct %}<span class="tag tag-ok">Верно</span>{% else %}<span class="tag tag-bad">Неверно</span>{% endif %}
+              {% else %}
+              <span class="tag tag-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+  <p class="center muted pad-top"><a href="/" class="link-muted">На главную</a></p>
+</div>
+{% endblock %}

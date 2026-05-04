@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}QuizLab — викторины с таймером{% endblock %}
+{% block page_id %}home{% endblock %}
+{% block content %}
+<section class="home-create card card-glass layout-stack layout-stack-lg fade-in">
+  <div class="section-head">
+    <h2 class="section-title">Создать свой квиз</h2>
+    <p class="muted">Соберите вопросы, опубликуйте ссылку или проведите live с аудиторией.</p>
+  </div>
+  <div class="hero-actions">
+    {% if user %}
+    <a href="/quiz/create" class="btn btn-primary btn-lg">Создать викторину</a>
+    <a href="/dashboard" class="btn btn-secondary btn-lg">Мои квизы</a>
+    {% else %}
+    <a href="/register" class="btn btn-primary btn-lg">Создать аккаунт</a>
+    <a href="/login" class="btn btn-ghost btn-lg">Уже есть аккаунт</a>
+    {% endif %}
+  </div>
+</section>
+<section class="home-top layout-stack layout-stack-xl fade-in">
+  <div class="section-head">
+    <h2 class="section-title">Популярные квизы</h2>
+    <p class="muted">Топ по числу прохождений среди квизов на витрине.</p>
+  </div>
+  {% if top_quizzes and top_quizzes|length > 0 %}
+  <div class="top-quiz-grid layout-stack">
+    {% for q, cnt in top_quizzes %}
+    <article class="card card-lift top-quiz-card">
+      <span class="top-quiz-badge input-mono">#{{ loop.index }}</span>
+      <h3 class="top-quiz-title">{{ q.title }}</h3>
+      <p class="muted top-quiz-desc">{{ q.description[:140] }}{% if q.description|length > 140 %}…{% endif %}</p>
+      <p class="small muted">Прохождений: <strong class="input-mono">{{ cnt }}</strong></p>
+      <div class="layout-inline">
+        <a href="/play/{{ q.published_link }}" class="btn btn-primary btn-lg btn-block">Играть</a>
+        <a href="/quiz/{{ q.id }}/conduct" class="btn btn-secondary btn-lg btn-block">Провести</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <div class="hero-actions layout-stack-sm">
+    <a href="/quizzes" class="btn btn-secondary btn-lg">Смотреть все квизы</a>
+  </div>
+  {% else %}
+  <div class="card card-glass empty-top layout-stack">
+    <p>Пока нет квизов на витрине — загляните в <a href="/quizzes">каталог</a> позже.</p>
+  </div>
+  {% endif %}
+</section>
+<section class="hero fade-in layout-stack layout-stack-lg">
+  <h1 class="hero-title">Создавайте викторины. Делитесь ссылкой. Смотрите статистику.</h1>
+  <p class="hero-lead">Таймер на каждый вопрос или на всю игру, типы вопросов с выбором и текстовый ввод, защита паролем и экспорт результатов в CSV.</p>
+  <div class="hero-actions">
+    {% if user %}
+    <a href="/quiz/create" class="btn btn-primary btn-lg">Новый квиз</a>
+    {% else %}
+    <a href="/register" class="btn btn-primary btn-lg">Начать бесплатно</a>
+    <a href="/login" class="btn btn-ghost btn-lg">Уже есть аккаунт</a>
+    {% endif %}
+  </div>
+</section>
+<section class="grid-features layout-stack">
+  <article class="card card-lift">
+    <div class="card-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
+    <h2 class="card-title">Таймер</h2>
+    <p class="card-text">Серверная проверка времени, синхронизация и круговой индикатор для участников.</p>
+  </article>
+  <article class="card card-lift">
+    <div class="card-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
+    <h2 class="card-title">Безопасность</h2>
+    <p class="card-text">Правильные ответы не уходят в браузер до завершения. JWT в httpOnly-куках.</p>
+  </article>
+  <article class="card card-lift">
+    <div class="card-icon"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i></div>
+    <h2 class="card-title">Аналитика</h2>
+    <p class="card-text">Прохождения, средний и медианный балл, распределение ответов по вариантам.</p>
+  </article>
+</section>
+{% endblock %}

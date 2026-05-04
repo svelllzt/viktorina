@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Live вопрос {{ index }}{% endblock %}
+{% block page_id %}live-question{% endblock %}
+{% block head_extra %}
+<meta name="live-q-index" content="{{ index }}">
+{% endblock %}
+{% block content %}
+<div
+  class="narrow fade-in live-question-page"
+  data-pin="{{ quiz.live_pin }}"
+  data-attempt-id="{{ attempt.id }}"
+  data-deadline-ms="{{ deadline_ms }}"
+>
+  <section class="card card-glass layout-stack">
+    <p class="muted">Вопрос {{ index }} из {{ total }}</p>
+    {% if deadline_ms and not already %}
+    <div class="live-inline-timer" id="liveQTimerRoot">
+      <span class="input-mono" id="liveQTimerSec">—</span><span class="muted"> сек</span>
+    </div>
+    {% endif %}
+    <h2 class="question-title">{{ question.text }}</h2>
+    {% if already %}
+    <p class="alert alert-success show">Ответ принят! Ожидайте следующий вопрос.</p>
+    {% else %}
+    <form method="post" action="/join/{{ quiz.live_pin }}/answer" class="form-stack" id="liveAnswerForm" data-validate="live-answer">
+      {% if question.question_type.value == "single_choice" %}
+      {% for o in question.options %}
+      <label class="option-card"><input class="sr-only" type="radio" name="option_id" value="{{ o.id }}"><span class="option-body">{{ o.text }}</span></label>
+      {% endfor %}
+      {% elif question.question_type.value == "multiple_choice" %}
+      {% for o in question.options %}
+      <label class="option-card"><input class="sr-only" type="checkbox" name="opt_{{ o.id }}"><span class="option-body">{{ o.text }}</span></label>
+      {% endfor %}
+      {% else %}
+      <input type="text" name="text_answer" class="input" required>
+      {% endif %}
+      <button type="submit" class="btn btn-primary btn-lg" id="liveSubmitBtn">Ответить</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

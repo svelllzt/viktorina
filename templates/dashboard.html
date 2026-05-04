@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Кабинет — QuizLab{% endblock %}
+{% block page_id %}dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-page layout-stack layout-stack-lg fade-in">
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Ваши викторины</h1>
+    <p class="muted">За последние 30 дней завершённых прохождений: <strong>{{ month_attempts }}</strong></p>
+  </div>
+  <a href="/quiz/create" class="btn btn-primary btn-lg"><i class="fa-solid fa-plus" aria-hidden="true"></i> Создать викторину</a>
+</div>
+<div class="quiz-grid">
+  {% for row in cards %}
+  <article class="card card-lift quiz-card">
+    <div class="quiz-card-head">
+      <h2 class="quiz-card-title">{{ row.quiz.title }}</h2>
+      <span class="badge badge-{{ row.quiz.status.value }}">{{ row.quiz.status.value }}</span>
+    </div>
+    <p class="quiz-card-desc muted">{{ row.quiz.description[:120] }}{% if row.quiz.description|length > 120 %}…{% endif %}</p>
+    <dl class="quiz-stats">
+      <div><dt>Вопросов</dt><dd>{{ row.n_questions }}</dd></div>
+      <div><dt>Прохождений</dt><dd>{{ row.n_attempts }}</dd></div>
+      <div><dt>Средний балл</dt><dd>{% if row.avg_score is not none %}{{ row.avg_score }}{% else %}—{% endif %}</dd></div>
+    </dl>
+    <div class="quiz-card-actions">
+      <a href="/quiz/{{ row.quiz.id }}/edit" class="btn btn-secondary">Редактировать</a>
+      <a href="/quiz/{{ row.quiz.id }}/stats" class="btn btn-ghost">Статистика</a>
+      {% if row.quiz.published_link and row.quiz.status.value == 'published' %}
+      <button type="button" class="btn btn-ghost copy-link" data-link="{{ request.state.base_url }}/play/{{ row.quiz.published_link }}">Копировать ссылку</button>
+      {% endif %}
+      {% if row.quiz.is_live and row.quiz.status.value == 'published' %}
+      <a href="/quiz/{{ row.quiz.id }}/live/open" class="btn btn-accent">Запустить Live</a>
+      {% endif %}
+    </div>
+    <form method="post" action="/quiz/{{ row.quiz.id }}/delete" class="inline-danger" data-confirm="Удалить викторину «{{ row.quiz.title }}»?">
+      <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+    </form>
+  </article>
+  {% else %}
+  <div class="empty-state card card-glass">
+    <p>Пока нет викторин. Создайте первую — это займёт пару минут.</p>
+    <a href="/quiz/create" class="btn btn-primary btn-lg">Создать викторину</a>
+  </div>
+  {% endfor %}
+</div>
+</div>
+{% endblock %}

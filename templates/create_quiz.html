@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{% if quiz %}Редактирование{% else %}Новая викторина{% endif %} — QuizLab{% endblock %}
+{% block page_id %}editor{% endblock %}
+{% block content %}
+{% if not quiz %}
+<div class="narrow fade-in">
+  <div class="card card-glass">
+    <h1 class="page-title">Новая викторина</h1>
+    <form method="post" action="/quiz/create" class="form-stack" data-validate="quiz-new">
+      <label class="field">
+        <span class="field-label">Название</span>
+        <input type="text" name="title" class="input {% if errors.title %}input-invalid{% endif %}" required maxlength="500">
+        {% if errors.title %}<span class="field-error show">{{ errors.title }}</span>{% endif %}
+      </label>
+      <label class="field">
+        <span class="field-label">Описание</span>
+        <textarea name="description" class="input input-area" rows="3"></textarea>
+      </label>
+      <fieldset class="field">
+        <legend class="field-label">Режим таймера</legend>
+        <label class="radio-row"><input type="radio" name="timer_mode" value="per_question" checked> На каждый вопрос</label>
+        <label class="radio-row"><input type="radio" name="timer_mode" value="whole_quiz"> На всю викторину</label>
+      </fieldset>
+      <label class="field">
+        <span class="field-label">Длительность, сек (5–300)</span>
+        <input type="number" name="timer_duration" class="input input-mono" value="30" min="5" max="300" required>
+      </label>
+      <label class="check-row"><input type="checkbox" name="show_correct_after_question" value="1"> Показывать верность после каждого вопроса</label>
+      <label class="check-row"><input type="checkbox" name="show_final_results" value="1" checked> Показывать итоговую таблицу</label>
+      <label class="check-row"><input type="checkbox" name="is_live" value="1"> Live Quiz (с ведущим)</label>
+      <fieldset class="field">
+        <legend class="field-label">Доступ</legend>
+        <label class="radio-row"><input type="radio" name="access_type" value="public" checked> Публичная</label>
+        <label class="radio-row"><input type="radio" name="access_type" value="password"> По паролю</label>
+      </fieldset>
+      <label class="field">
+        <span class="field-label">Пароль доступа</span>
+        <input type="text" name="access_password" class="input" autocomplete="off">
+      </label>
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Создать и перейти к вопросам</button>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="editor-layout fade-in">
+  {% if request.query_params.get('published') %}
+  <div class="alert alert-success show">Викторина опубликована. Ссылка для участников: <code class="inline-code">{{ request.state.base_url }}/play/{{ quiz.published_link }}</code></div>
+  {% if published_qr %}
+  <div class="card card-glass qr-card">
+    <h3 class="section-title">QR-код для обычного прохождения</h3>
+    <img src="{{ published_qr }}" alt="QR-код ссылки на квиз" class="qr-image">
+  </div>
+  {% endif %}
+  {% endif %}
+  {% if request.query_params.get('err') == 'no_questions' %}
+  <div class="alert alert-error show">Добавьте хотя бы один вопрос перед публикацией.</div>
+  {% endif %}
+  <section class="card card-glass section-block">
+    <h2 class="section-title">Настройки</h2>
+    <form method="post" action="/quiz/{{ quiz.id }}/update" class="form-grid" data-validate="quiz-settings">
+      <label class="field span-2">
+        <span class="field-label">Название</span>
+        <input type="text" name="title" class="input {% if errors.title %}input-invalid{% endif %}" value="{{ quiz.title }}" required maxlength="500">
+        {% if errors.title %}<span class="field-error show">{{ errors.title }}</span>{% endif %}
+      </label>
+      <label class="field span-2">
+        <span class="field-label">Описание</span>
+        <textarea name="description" class="input input-area" rows="3">{{ quiz.description }}</textarea>
+      </label>
+      <fieldset class="field span-2">
+        <legend class="field-label">Режим таймера</legend>
+        <label class="radio-row"><input type="radio" name="timer_mode" value="per_question" {% if quiz.timer_mode.value == 'per_question' %}checked{% endif %}> На вопрос</label>
+        <label class="radio-row"><input type="radio" name="timer_mode" value="whole_quiz" {% if quiz.timer_mode.value == 'whole_quiz' %}checked{% endif %}> На всю викторину</label>
+      </fieldset>
+      <label class="field">
+        <span class="field-label">Секунды таймера</span>
+        <input type="number" name="timer_duration" class="input input-mono" value="{{ quiz.timer_duration }}" min="5" max="300" required>
+      </label>
+      <div class="field span-2 check-list">
+        <label class="check-row"><input type="checkbox" name="show_correct_after_question" value="1" {% if quiz.show_correct_after_question %}checked{% endif %}> Подсказка после вопроса</label>
+        <label class="check-row"><input type="checkbox" name="show_final_results" value="1" {% if quiz.show_final_results %}checked{% endif %}> Итоговая таблица игроку</label>
+        <label class="check-row"><input type="checkbox" name="is_live" value="1" {% if quiz.is_live %}checked{% endif %}> Live Quiz (управляет ведущий)</label>
+      </div>
+      <fieldset class="field span-2">
+        <legend class="field-label">Доступ</legend>
+        <label class="radio-row"><input type="radio" name="access_type" value="public" {% if quiz.access_type.value == 'public' %}checked{% endif %}> Публичная</label>
+        <label class="radio-row"><input type="radio" name="access_type" value="password" {% if quiz.access_type.value == 'password' %}checked{% endif %}> По паролю</label>
+      </fieldset>
+      <label class="field span-2">
+        <span class="field-label">Пароль</span>
+        <input type="text" name="access_password" class="input" value="{{ quiz.access_password or '' }}" autocomplete="off">
+      </label>
+      <div class="form-actions span-2">
+        <button type="submit" class="btn btn-primary btn-lg">Сохранить настройки</button>
+      </div>
+    </form>
+    <div class="toolbar-row">
+      <a href="/quiz/{{ quiz.id }}/publish" class="btn btn-accent btn-lg">Опубликовать</a>
+      {% if quiz.is_live and quiz.status.value == 'published' %}
+      <a href="/quiz/{{ quiz.id }}/live/open" class="btn btn-accent btn-lg">Запустить Live</a>
+      {% endif %}
+      <a href="/quiz/{{ quiz.id }}/close" class="btn btn-secondary btn-lg">Закрыть</a>
+      <form method="post" action="/quiz/{{ quiz.id }}/duplicate" class="inline-form"><button type="submit" class="btn btn-ghost btn-lg">Дублировать</button></form>
+      <a href="/quiz/{{ quiz.id }}/stats" class="btn btn-ghost btn-lg">Статистика</a>
+      <a href="/quiz/{{ quiz.id }}/export" class="btn btn-ghost btn-lg">CSV</a>
+    </div>
+  </section>
+  <section class="card card-glass section-block">
+    <h2 class="section-title">Вопросы</h2>
+    <ul class="question-list" id="questionList" data-quiz-id="{{ quiz.id }}">
+      {% for q in questions %}
+      <li class="question-item card-inner" data-qid="{{ q.id }}">
+        <div class="question-item-head">
+          <span class="badge badge-muted">#{{ loop.index }}</span>
+          <span class="badge-type">{{ q.question_type.value }}</span>
+          <div class="reorder-btns">
+            <button type="button" class="btn btn-icon js-move-up" title="Выше" aria-label="Выше"><i class="fa-solid fa-chevron-up"></i></button>
+            <button type="button" class="btn btn-icon js-move-down" title="Ниже" aria-label="Ниже"><i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+        </div>
+        <p class="question-text">{{ q.text }}</p>
+        <p class="muted small">Баллы: {{ q.points }}{% if q.timer_override %} · таймер вопроса: {{ q.timer_override }}с{% endif %}</p>
+        <div class="row-actions">
+          <button type="button" class="btn btn-secondary btn-sm js-toggle-edit">Изменить</button>
+          <form method="post" action="/quiz/{{ quiz.id }}/questions/{{ q.id }}/delete" data-confirm="Удалить вопрос?" class="inline-form"><button type="submit" class="btn btn-danger btn-sm">Удалить</button></form>
+        </div>
+        <div class="question-edit-panel hidden">
+          <form method="post" action="/quiz/{{ quiz.id }}/questions/{{ q.id }}/update" class="form-stack tight" data-validate="question">
+            <label class="field">
+              <span class="field-label">Текст</span>
+              <textarea name="text" class="input input-area" required rows="2">{{ q.text }}</textarea>
+            </label>
+            <label class="field">
+              <span class="field-label">Тип</span>
+              <select name="question_type" class="input js-qtype">
+                <option value="single_choice" {% if q.question_type.value == 'single_choice' %}selected{% endif %}>Один ответ</option>
+                <option value="multiple_choice" {% if q.question_type.value == 'multiple_choice' %}selected{% endif %}>Несколько ответов</option>
+                <option value="text_input" {% if q.question_type.value == 'text_input' %}selected{% endif %}>Текст</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Баллы 1–100</span>
+              <input type="number" name="points" class="input input-mono" value="{{ q.points }}" min="1" max="100">
+            </label>
+            <label class="field">
+              <span class="field-label">Таймер вопроса, сек (пусто = общий)</span>
+              <input type="number" name="timer_override" class="input input-mono" value="{{ q.timer_override or '' }}" min="5" max="300" placeholder="">
+            </label>
+            <label class="field">
+              <span class="field-label">Пояснение после ответа</span>
+              <textarea name="explanation" class="input input-area" rows="2">{{ q.explanation or '' }}</textarea>
+            </label>
+            <div class="opts-block js-opts-choice" {% if q.question_type.value == 'text_input' %}style="display:none"{% endif %}>
+              <div class="js-opt-edit-rows">
+              {% set opts = q.options|sort(attribute='id') %}
+              {% for o in opts %}
+              <div class="opt-editor">
+                <input type="text" name="option_texts" class="input" value="{{ o.text }}" placeholder="Вариант {{ loop.index }}">
+                {% if q.question_type.value == 'single_choice' %}
+                <label class="radio-inline"><input type="radio" name="correct_single" value="{{ loop.index }}" {% if o.is_correct %}checked{% endif %}> верный</label>
+                {% elif q.question_type.value == 'multiple_choice' %}
+                <label class="radio-inline"><input type="checkbox" name="correct_multi" value="{{ loop.index }}" {% if o.is_correct %}checked{% endif %}> верный</label>
+                {% endif %}
+              </div>
+              {% endfor %}
+              </div>
+              <button type="button" class="btn btn-sm btn-secondary js-edit-add-opt" {% if opts|length >= 6 %}disabled{% endif %}>+ Добавить вариант</button>
+              <p class="muted small js-opt-limit-hint {% if opts|length < 6 %}hidden{% endif %}">Максимум 6 вариантов</p>
+            </div>
+            <div class="opts-block js-opts-text" {% if q.question_type.value != 'text_input' %}style="display:none"{% endif %}>
+              {% set corr = q.options|selectattr('is_correct')|list|sort(attribute='id') %}
+              <label class="field">
+                <span class="field-label">Правильный ответ</span>
+                <input type="text" name="correct_text" class="input" value="{{ corr[0].text if corr|length > 0 else '' }}" {% if q.question_type.value == 'text_input' %}required{% endif %}>
+              </label>
+              {% for o in corr[1:] %}
+              <input type="text" name="alt_texts" class="input" value="{{ o.text }}" placeholder="Допустимый синоним">
+              {% endfor %}
+              <input type="text" name="alt_texts" class="input" placeholder="Допустимый синоним">
+              <input type="text" name="alt_texts" class="input" placeholder="Допустимый синоним">
+            </div>
+            <button type="submit" class="btn btn-primary">Сохранить вопрос</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card card-glass section-block">
+    <h2 class="section-title">Добавить вопрос</h2>
+    {% if errors.options or errors.correct or errors.text %}
+    <div class="alert alert-error show">{{ errors.options or errors.correct or errors.text }}</div>
+    {% endif %}
+    <form method="post" action="/quiz/{{ quiz.id }}/questions/add" class="form-stack" data-validate="question-add" id="addQuestionForm">
+      <label class="field">
+        <span class="field-label">Текст вопроса</span>
+        <textarea name="text" class="input input-area" required rows="2"></textarea>
+      </label>
+      <label class="field">
+        <span class="field-label">Тип</span>
+        <select name="question_type" class="input js-add-qtype" id="addQType">
+          <option value="single_choice">Один ответ</option>
+          <option value="multiple_choice">Несколько ответов</option>
+          <option value="text_input">Текстовый ввод</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field-label">Баллы</span>
+        <input type="number" name="points" class="input input-mono" value="1" min="1" max="100">
+      </label>
+      <label class="field">
+        <span class="field-label">Таймер вопроса, сек</span>
+        <input type="number" name="timer_override" class="input input-mono" min="5" max="300" placeholder="по умолчанию">
+      </label>
+      <label class="field">
+        <span class="field-label">Пояснение</span>
+        <textarea name="explanation" class="input input-area" rows="2"></textarea>
+      </label>
+      <div class="opts-block js-add-choice">
+        <div class="js-add-opt-rows" id="addOptRows"></div>
+        <button type="button" class="btn btn-sm btn-secondary" id="addOptRowBtn">+ Добавить вариант</button>
+        <p class="muted small" id="addOptRowHint">Минимум 2 варианта, максимум 6</p>
+        <div class="correct-row js-add-single" id="addCorrectSingleWrap">
+          <span class="field-label">Номер правильного варианта</span>
+          <input type="number" name="correct_single" id="addCorrectSingleInput" class="input input-mono" min="1" max="2" value="1">
+        </div>
+        <div class="correct-row js-add-multi hidden" id="addCorrectMultiWrap">
+          <span class="field-label">Отметьте все верные варианты</span>
+          <div class="check-inline" id="addMultiChecks"></div>
+        </div>
+      </div>
+      <div class="opts-block js-add-text hidden">
+        <label class="field">
+          <span class="field-label">Правильный ответ</span>
+          <input type="text" name="correct_text" class="input">
+        </label>
+        <input type="text" name="alt_texts" class="input" placeholder="Синоним">
+        <input type="text" name="alt_texts" class="input" placeholder="Синоним">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg">Добавить вопрос</button>
+    </form>
+  </section>
+  <p class="back-link"><a href="/dashboard" class="link-back">← К списку викторин</a></p>
+</div>
+{% endif %}
+{% endblock %}

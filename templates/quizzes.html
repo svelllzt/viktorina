@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Все квизы — QuizLab{% endblock %}
+{% block page_id %}catalog{% endblock %}
+{% block content %}
+<div class="page-head layout-stack layout-stack-lg fade-in">
+  <div>
+    <h1 class="page-title">Каталог квизов</h1>
+    <p class="muted">Только квизы, одобренные модератором для витрины.</p>
+  </div>
+</div>
+{% if rows %}
+<div class="quiz-grid layout-stack">
+  {% for row in rows %}
+  <article class="card card-lift catalog-card">
+    <h2 class="quiz-card-title">{{ row.quiz.title }}</h2>
+    <p class="muted catalog-desc">{{ row.quiz.description[:220] }}{% if row.quiz.description|length > 220 %}…{% endif %}</p>
+    <p class="small muted">Автор: {{ row.quiz.author.email }}</p>
+    <dl class="quiz-stats">
+      <div><dt>Вопросов</dt><dd>{{ row.n_questions }}</dd></div>
+      <div><dt>Прохождений</dt><dd>{{ row.n_attempts }}</dd></div>
+      <div><dt>Средний балл</dt><dd>{% if row.avg_score is not none %}{{ row.avg_score }}{% else %}—{% endif %}</dd></div>
+    </dl>
+    <div class="layout-inline">
+      <a href="/play/{{ row.quiz.published_link }}" class="btn btn-primary btn-lg btn-block">Играть</a>
+      <a href="/quiz/{{ row.quiz.id }}/conduct" class="btn btn-secondary btn-lg btn-block">Провести</a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state card card-glass layout-stack">
+  <p>В каталоге пока нет одобренных квизов.</p>
+  <p class="muted">Загляните позже или <a href="/register">создайте свой</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

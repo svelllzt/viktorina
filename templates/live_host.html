@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Live — {{ quiz.title }}{% endblock %}
+{% block page_id %}live-host{% endblock %}
+{% block head_extra %}
+{% if quiz.live_pin %}<meta name="live-pin" content="{{ quiz.live_pin }}">{% endif %}
+{% endblock %}
+{% block content %}
+<div
+  class="layout-stack fade-in live-page"
+  data-quiz-id="{{ quiz.id }}"
+  data-live-pin="{{ quiz.live_pin or '' }}"
+  data-initial-state="{{ state }}"
+  data-total="{{ total_questions }}"
+>
+  {% if not quiz.live_pin %}
+  <section class="card card-glass layout-stack">
+    <h1 class="page-title">{{ quiz.title }}</h1>
+    <p class="muted">Сгенерируйте PIN и QR для подключения участников.</p>
+    <a href="/quiz/{{ quiz.id }}/live/open" class="btn btn-primary btn-lg">Запустить Live</a>
+  </section>
+  {% else %}
+  <section class="card card-glass layout-stack {% if state == 'running' or state == 'finished' %}hidden{% endif %}" id="hostLobby">
+    <h1 class="page-title">{{ quiz.title }}</h1>
+    <p class="muted">Подключение по коду</p>
+    <div class="live-pin">{{ quiz.live_pin }}</div>
+    {% if join_qr %}
+    <img src="{{ join_qr }}" alt="QR для подключения" class="qr-image">
+    {% endif %}
+    <code class="inline-code">{{ join_url }}</code>
+    <p>Подключено: <strong id="liveConnected">{{ connected_count }}</strong></p>
+    <button type="button" class="btn btn-primary btn-lg" id="liveStartBtn">Начать викторину</button>
+  </section>
+  <section class="card card-glass layout-stack {% if state == 'waiting' %}hidden{% endif %}" id="hostStage">
+    <p class="muted">Вопрос <strong id="liveIndex">0</strong> из {{ total_questions }}</p>
+    <p id="liveTimerLine" class="live-timer-line hidden">Осталось: <strong id="liveTimerSec">—</strong> сек</p>
+    <h2 class="question-title" id="liveQuestionText"></h2>
+    <p class="muted">Ответило <strong id="liveAnswered">0</strong> из <strong id="liveConnectedStage">0</strong></p>
+    <p class="alert alert-success {% if state != 'finished' %}hidden{% endif %}" id="hostFinishedMsg">Викторина завершена. Для новой сессии снова нажмите «Запустить Live» в кабинете.</p>
+    <div id="liveBars" class="live-bars"></div>
+    <div class="layout-inline layout-stack-top">
+      <button type="button" class="btn btn-secondary btn-lg hidden" id="liveNextBtn">Следующий вопрос</button>
+      <button type="button" class="btn btn-accent btn-lg hidden" id="liveFinishLastBtn">Завершить и показать результаты</button>
+      <button type="button" class="btn btn-danger btn-lg" id="liveFinishEarlyBtn">Завершить викторину</button>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

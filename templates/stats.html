@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Статистика — {{ quiz.title }}{% endblock %}
+{% block page_id %}stats{% endblock %}
+{% block head_extra %}
+<script type="application/json" id="stats-chart-data">{{ chart_json | safe }}</script>
+<script src="/static/js/charts_stats.js" defer></script>
+{% endblock %}
+{% block content %}
+<div class="stats-page fade-in layout-stack layout-stack-xl">
+  <div class="page-head layout-stack layout-stack-lg">
+    <div>
+      <h1 class="page-title">Статистика</h1>
+      <p class="muted">{{ quiz.title }}</p>
+    </div>
+    <div class="head-btns layout-inline">
+      <a href="/quiz/{{ quiz.id }}/export" class="btn btn-primary btn-lg"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> Экспорт CSV</a>
+      <a href="/quiz/{{ quiz.id }}/edit" class="btn btn-ghost btn-lg">К редактору</a>
+    </div>
+  </div>
+  <section class="metrics-row layout-stack">
+    <div class="card card-glass metric"><span class="metric-label">Прохождений</span><span class="metric-value input-mono">{{ attempts|length }}</span></div>
+    <div class="card card-glass metric"><span class="metric-label">Средний балл</span><span class="metric-value input-mono">{{ avg }}</span></div>
+    <div class="card card-glass metric"><span class="metric-label">Медиана</span><span class="metric-value input-mono">{{ median }}</span></div>
+  </section>
+  <section class="charts-grid layout-stack">
+    <div class="card card-glass chart-card layout-stack">
+      <h2 class="section-title">Верные и ошибки</h2>
+      <div class="chart-wrap"><canvas id="chartPie" aria-label="Круговая диаграмма"></canvas></div>
+    </div>
+    <div class="card card-glass chart-card layout-stack">
+      <h2 class="section-title">% правильных по вопросам</h2>
+      <div class="chart-wrap chart-wrap-wide"><canvas id="chartBar" aria-label="Столбчатая диаграмма"></canvas></div>
+    </div>
+    <div class="card card-glass chart-card layout-stack">
+      <h2 class="section-title">Распределение баллов</h2>
+      <div class="chart-wrap chart-wrap-wide"><canvas id="chartHist" aria-label="Гистограмма"></canvas></div>
+    </div>
+  </section>
+  <section class="card card-glass section-block layout-stack">
+    <h2 class="section-title">Прохождения</h2>
+    <div class="table-scroll">
+      <table class="data-table sortable-table" id="attemptsTable">
+        <thead>
+          <tr>
+            <th data-sort="str">Участник</th>
+            <th data-sort="date">Дата</th>
+            <th data-sort="num">Баллы</th>
+            <th data-sort="num">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in attempts %}
+          {% set pct = ((100 * a.score / a.max_score)|round(1)) if a.max_score else 0 %}
+          <tr data-date="{{ a.finished_at.isoformat() if a.finished_at else '' }}" data-score="{{ a.score }}" data-pct="{{ pct }}">
+            <td>{{ a.participant_name or '—' }}</td>
+            <td>{{ a.finished_at.strftime('%d.%m.%Y %H:%M') if a.finished_at else '—' }}</td>
+            <td>{{ a.score }} / {{ a.max_score }}</td>
+            <td>{{ pct }}%</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="center muted">Пока нет завершённых прохождений</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="card card-glass section-block layout-stack">
+    <h2 class="section-title">Распределение ответов</h2>
+    {% for q in questions %}
+    <div class="dist-block">
+      <h3 class="dist-q-title">{{ loop.index }}. {{ q.text[:200] }}{% if q.text|length > 200 %}…{% endif %}</h3>
+      {% set d = dist[q.id] %}
+      {% if q.question_type.value == 'text_input' %}
+      <table class="data-table compact">
+        <thead><tr><th>Ответ</th><th>Кол-во</th><th>Верно</th></tr></thead>
+        <tbody>
+          {% for o in d.options %}
+          <tr><td>{{ o.text }}</td><td>{{ o.count }}</td><td>{% if o.is_correct %}да{% else %}нет{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% if d.popular_wrong %}
+      <p class="small muted highlight-wrong">Чаще всего выбирали неверно: <strong>{{ d.popular_wrong }}</strong></p>
+      {% endif %}
+      <table class="data-table compact">
+        <thead><tr><th>Вариант</th><th>Выборов</th><th>Статус</th></tr></thead>
+        <tbody>
+          {% for o in d.options %}
+          <tr class="{% if not o.is_correct and d.popular_wrong == o.text %}row-hot-wrong{% endif %}">
+            <td>{{ o.text }}</td>
+            <td class="input-mono">{{ o.count }}</td>
+            <td>{% if o.is_correct %}верный{% else %}дистрактор{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% if hardest %}
+  <section class="card card-glass section-block layout-stack">
+    <h2 class="section-title">Сложные вопросы</h2>
+    <ol class="hardest-list">
+      {% for h in hardest %}
+      <li><span class="input-mono">{{ h.wrong }}</span> ошибок — {{ h.question.text[:120] }}{% if h.question.text|length > 120 %}…{% endif %}</li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

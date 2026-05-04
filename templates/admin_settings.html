@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}SMTP — админка{% endblock %}
+{% block page_id %}admin{% endblock %}
+{% block content %}
+<div class="page-head layout-stack layout-stack-lg fade-in">
+  <h1 class="page-title">Настройки SMTP</h1>
+  <p class="muted">Значения сохраняются в <code class="inline-code">runtime_config.json</code> рядом с <code class="inline-code">config.py</code> и подхватываются без перезапуска. Базовые ключи заданы в <code class="inline-code">config.py</code> как <code class="inline-code">_DEFAULTS</code>.</p>
+</div>
+{% if flash_ok %}
+<div class="alert alert-success show">Сохранено.</div>
+{% endif %}
+{% if flash_mail == 'ok' %}
+<div class="alert alert-success show">Тестовое письмо отправлено на {{ settings.ADMIN_EMAIL }}.</div>
+{% elif flash_mail == 'err' %}
+<div class="alert alert-error show">Ошибка отправки{% if mail_detail %}: {{ mail_detail }}{% endif %}.</div>
+{% endif %}
+<section class="card card-glass section-block layout-stack">
+  <form method="post" action="/admin/settings" class="form-grid">
+    <label class="field span-2">
+      <span class="field-label">SMTP хост</span>
+      <input type="text" name="smtp_host" class="input" value="{{ settings.SMTP_HOST }}" required>
+    </label>
+    <label class="field">
+      <span class="field-label">Порт</span>
+      <input type="number" name="smtp_port" class="input input-mono" value="{{ settings.SMTP_PORT }}" required>
+    </label>
+    <label class="field">
+      <span class="field-label">Пользователь</span>
+      <input type="text" name="smtp_user" class="input" value="{{ settings.SMTP_USER }}" required>
+    </label>
+    <label class="field span-2">
+      <span class="field-label">Пароль приложения</span>
+      <input type="password" name="smtp_password" class="input" value="{{ settings.SMTP_PASSWORD }}" required autocomplete="off">
+    </label>
+    <label class="field span-2">
+      <span class="field-label">От кого (From)</span>
+      <input type="text" name="smtp_from" class="input" value="{{ settings.SMTP_FROM }}" required>
+    </label>
+    <div class="form-actions span-2 layout-inline">
+      <button type="submit" class="btn btn-primary btn-lg">Сохранить</button>
+    </div>
+  </form>
+  <form method="post" action="/admin/settings/test-mail" class="layout-stack layout-stack-top">
+    <button type="submit" class="btn btn-secondary btn-lg">Отправить тестовое письмо</button>
+  </form>
+</section>
+<p class="back-link"><a href="/admin/featured" class="link-back">← Модерация квизов</a></p>
+{% endblock %}

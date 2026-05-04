@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Live результаты — {{ quiz.title }}{% endblock %}
+{% block page_id %}live-results{% endblock %}
+{% block content %}
+<div class="narrow fade-in">
+  <section class="card card-glass results-hero">
+    <h1 class="page-title">Результат</h1>
+    <p class="results-score"><span class="score-num input-mono">{{ result.score }}</span> <span class="muted">из</span> <span class="score-max input-mono">{{ result.max_score }}</span></p>
+    <p class="results-pct">Точность: <strong>{{ result.pct }}%</strong></p>
+  </section>
+  <section class="card card-glass results-table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Вопрос</th><th>Ваш ответ</th><th>Результат</th></tr></thead>
+      <tbody>
+      {% for row in result.rows %}
+      <tr>
+        <td>{{ row.question }}</td>
+        <td>{{ row.your_answer }}</td>
+        <td>{% if row.is_correct %}<span class="tag tag-ok">Верно</span>{% else %}<span class="tag tag-bad">Неверно</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

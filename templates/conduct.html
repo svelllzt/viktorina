@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Провести — {{ quiz.title }}{% endblock %}
+{% block page_id %}conduct{% endblock %}
+{% block content %}
+<div class="narrow fade-in">
+  <section class="card card-glass layout-stack">
+    <h1 class="page-title">{{ quiz.title }}</h1>
+    {% if mode == "normal" %}
+    <p class="muted">Обычное прохождение по ссылке.</p>
+    <code class="inline-code">{{ play_url }}</code>
+    <img src="{{ play_qr }}" alt="QR-код ссылки на квиз" class="qr-image">
+    {% else %}
+    <p class="muted">Эту live-викторину может провести только автор. Подключайтесь по PIN, который покажет ведущий на экране.</p>
+    <p class="small muted">Обычная игра по ссылке (без синхронного live):</p>
+    <code class="inline-code">{{ play_url }}</code>
+    <img src="{{ play_qr }}" alt="QR-код ссылки на квиз" class="qr-image">
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

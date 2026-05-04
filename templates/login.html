@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Вход — QuizLab{% endblock %}
+{% block page_id %}auth{% endblock %}
+{% block content %}
+<div class="auth-layout fade-in">
+  <div class="card card-glass auth-card">
+    <h1 class="h1-tight">Вход</h1>
+    <p class="muted">Только для авторов викторин</p>
+    {% if request.query_params.get('pwd') == 'reset' %}
+    <div class="alert alert-success show">Пароль обновлён. Войдите с новым паролем.</div>
+    {% endif %}
+    {% if errors.form %}
+    <div class="alert alert-error show">{{ errors.form }}</div>
+    {% endif %}
+    <form method="post" action="/login" class="form-stack" data-validate="login">
+      <label class="field">
+        <span class="field-label">Email</span>
+        <input type="email" name="email" class="input" required autocomplete="email" value="{{ email or '' }}" minlength="3">
+      </label>
+      <label class="field">
+        <span class="field-label">Пароль</span>
+        <input type="password" name="password" class="input" required autocomplete="current-password" minlength="8">
+      </label>
+      <button type="submit" class="btn btn-primary btn-block btn-lg">Войти</button>
+    </form>
+    <p class="auth-switch"><a href="/forgot-password">Забыли пароль?</a></p>
+    <p class="auth-switch"><a href="/register">Создать аккаунт</a></p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}QuizLab{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body data-page="{% block page_id %}default{% endblock %}">
+  <div class="bg-gradient" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a href="/" class="brand">
+        <span class="brand-mark"><i class="fa-solid fa-bolt" aria-hidden="true"></i></span>
+        <span class="brand-text">QuizLab</span>
+      </a>
+      <nav class="nav-main" aria-label="Основная навигация">
+        <a href="/" class="nav-link">Главная</a>
+        <a href="/quizzes" class="nav-link">Все квизы</a>
+        {% if user %}
+        <a href="/dashboard" class="nav-link">Мои квизы</a>
+        {% endif %}
+        {% if user and user.role == 'admin' %}
+        <details class="nav-dropdown">
+          <summary class="nav-link nav-dropdown-summary">Админка <i class="fa-solid fa-chevron-down fa-xs" aria-hidden="true"></i></summary>
+          <div class="nav-dropdown-panel">
+            <a href="/admin/featured" class="nav-dropdown-link">Модерация квизов</a>
+            <a href="/admin/settings" class="nav-dropdown-link">Настройки SMTP</a>
+          </div>
+        </details>
+        {% endif %}
+        {% if user %}
+        <a href="/logout" class="nav-link">Выйти</a>
+        {% else %}
+        <a href="/login" class="nav-link">Вход</a>
+        <a href="/register" class="nav-link nav-link-accent">Регистрация</a>
+        {% endif %}
+      </nav>
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Переключить тему">
+        <span class="theme-icon theme-icon-sun"><i class="fa-solid fa-sun" aria-hidden="true"></i></span>
+        <span class="theme-icon theme-icon-moon"><i class="fa-solid fa-moon" aria-hidden="true"></i></span>
+      </button>
+    </div>
+  </header>
+  <main class="main-content shell layout-page">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer shell">
+    <p class="footer-note">QuizLab — викторины с таймером и честным подсчётом на сервере.</p>
+  </footer>
+  <script type="module" src="/static/js/main.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Подключение Live{% endblock %}
+{% block page_id %}live-join{% endblock %}
+{% block content %}
+<div class="narrow fade-in live-join-page" data-pin="{{ quiz.live_pin }}" data-has-attempt="{% if attempt %}1{% else %}0{% endif %}">
+  <section class="card card-glass layout-stack">
+    <h1 class="page-title">{{ quiz.title }}</h1>
+    {% if join_closed %}
+    <div class="alert alert-error show">Викторина уже идёт. Новые участники не принимаются.</div>
+    {% elif attempt %}
+    <p>Вы подключены как: <strong>{{ attempt.participant_name or "Участник" }}</strong></p>
+    <p class="muted" id="joinStatus">Ожидайте начала викторины. Ведущий скоро начнёт.</p>
+    <a href="/join/{{ quiz.live_pin }}/question" class="btn btn-primary hidden" id="joinGoBtn">Открыть текущий вопрос</a>
+    {% else %}
+    <form method="post" class="form-stack">
+      <label class="field">
+        <span class="field-label">Ваше имя</span>
+        <input type="text" name="participant_name" class="input" maxlength="200" required>
+      </label>
+      <button type="submit" class="btn btn-primary btn-lg">Подключиться</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
