@@ -340,6 +340,14 @@ body::before {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+.home-top {
+  margin-top: 24px;
+}
+
+.home-top .section-head {
+  margin-bottom: 10px;
+}
+
 .top-quiz-card {
   position: relative;
   padding-top: 32px;
@@ -841,8 +849,24 @@ body::before {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 0;
+  padding: 10px 12px;
   cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card-bg) 70%, transparent);
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.radio-row:hover,
+.check-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--card-bg));
+}
+
+.radio-row:has(input:checked),
+.check-row:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .auth-switch {
@@ -897,6 +921,31 @@ body::before {
 .narrow {
   max-width: 720px;
   margin: 0 auto;
+}
+
+.narrow-form {
+  max-width: 880px;
+}
+
+.narrow-play {
+  max-width: 860px;
+}
+
+.narrow-live-question {
+  max-width: 860px;
+}
+
+.narrow-form .card,
+.narrow-play .card,
+.narrow-live-question .card {
+  padding: 30px 34px;
+}
+
+fieldset.field {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  background: color-mix(in srgb, var(--card-bg) 75%, transparent);
 }
 
 .editor-layout {
@@ -1209,6 +1258,24 @@ body::before {
 
 .results-pct {
   font-size: 1.1rem;
+}
+
+.error-card {
+  text-align: center;
+  padding: 42px 30px;
+}
+
+.error-code {
+  margin: 0 0 10px;
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.error-detail {
+  max-width: 560px;
+  margin: 0 auto 22px;
 }
 
 .results-table-wrap {

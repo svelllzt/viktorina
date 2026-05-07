@@ -14,6 +14,9 @@
   {% elif feedback == 'wrong' %}
   <div class="alert alert-warn show">Предыдущий ответ неверный или время вышло.</div>
   {% endif %}
+  {% if feedback_explanation %}
+  <div class="alert alert-success show">Пояснение: {{ feedback_explanation }}</div>
+  {% endif %}
   <div class="question-top">
     <p class="muted progress-label">Вопрос {{ index }} из {{ total }}</p>
     <div class="timer-wrap" id="timerRoot">

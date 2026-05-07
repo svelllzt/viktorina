@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Ошибка {{ status_code }} — QuizLab{% endblock %}
+{% block page_id %}error-page{% endblock %}
+{% block content %}
+<div class="narrow fade-in">
+  <section class="card card-glass error-card">
+    <p class="error-code input-mono">{{ status_code }}</p>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="muted error-detail">{{ detail }}</p>
+    <div class="hero-actions">
+      <a href="/" class="btn btn-primary btn-lg">На главную</a>
+      <a href="/quizzes" class="btn btn-secondary btn-lg">Открыть квизы</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

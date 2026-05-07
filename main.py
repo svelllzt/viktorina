@@ -4,6 +4,8 @@ import io
 import json
 import os
 import base64
+import hashlib
+import hmac
 from urllib.parse import quote, unquote
 import secrets
 import smtplib
@@ -19,13 +21,13 @@ from typing import Annotated, Any, Optional
 import config as cfg
 from email_validator import validate_email as ev_validate_email, EmailNotValidError
 import qrcode
+from fastapi.exceptions import RequestValidationError
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -51,8 +53,8 @@ REFRESH_EXPIRE_DAYS = 14
 PLAY_COOKIE = "play_session"
 PLAY_MAX_AGE = 86400 * 7
 LIVE_COOKIE = "live_session"
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+PBKDF2_PREFIX = "pbkdf2_sha256"
+PBKDF2_ITERS = 390000
 
 engine = create_async_engine("sqlite+aiosqlite:///./quiz.db", echo=False)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -287,11 +289,34 @@ async def send_mail_async(to_addr: str, subject: str, body: str) -> None:
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    if not hashed:
+        return False
+    if hashed.startswith(f"{PBKDF2_PREFIX}$"):
+        try:
+            _, it_s, salt_b64, dk_b64 = hashed.split("$", 3)
+            iters = int(it_s)
+            salt = base64.urlsafe_b64decode(salt_b64.encode("ascii"))
+            expected = base64.urlsafe_b64decode(dk_b64.encode("ascii"))
+            check = hashlib.pbkdf2_hmac("sha256", plain.encode("utf-8"), salt, iters, dklen=len(expected))
+            return hmac.compare_digest(check, expected)
+        except Exception:
+            return False
+    if hashed.startswith("$2"):
+        try:
+            import bcrypt as _bcrypt
+
+            return bool(_bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8")))
+        except Exception:
+            return False
+    return False
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = os.urandom(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PBKDF2_ITERS, dklen=32)
+    salt_b64 = base64.urlsafe_b64encode(salt).decode("ascii")
+    dk_b64 = base64.urlsafe_b64encode(dk).decode("ascii")
+    return f"{PBKDF2_PREFIX}${PBKDF2_ITERS}${salt_b64}${dk_b64}"
 
 
 def create_token(data: dict, expires_delta: timedelta) -> str:
@@ -698,6 +723,69 @@ async def app_lifespan(app: FastAPI):
 app = FastAPI(title="QuizLab", lifespan=app_lifespan)
 
 
+def prefers_json(request: Request) -> bool:
+    path = request.url.path
+    accept = (request.headers.get("accept") or "").lower()
+    content_type = (request.headers.get("content-type") or "").lower()
+    if "application/json" in content_type:
+        return True
+    if "application/json" in accept and "text/html" not in accept:
+        return True
+    if request.headers.get("x-requested-with", "").lower() == "xmlhttprequest":
+        return True
+    if path.endswith("/sync") or path.endswith("/state"):
+        return True
+    if path.endswith("/start") or path.endswith("/next") or path.endswith("/finish"):
+        return True
+    if path.endswith("/answer"):
+        return True
+    return False
+
+
+async def render_error_page(request: Request, status_code: int, detail: str):
+    if prefers_json(request):
+        return JSONResponse({"detail": detail}, status_code=status_code)
+    user = None
+    try:
+        async with SessionLocal() as db:
+            user = await get_current_user(request, db)
+    except Exception:
+        user = None
+    title = "Страница не найдена" if status_code == 404 else "Что-то пошло не так"
+    return templates.TemplateResponse(
+        "error.html",
+        {
+            "request": request,
+            "user": user,
+            "status_code": status_code,
+            "title": title,
+            "detail": detail,
+        },
+        status_code=status_code,
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    detail = str(exc.detail) if exc.detail else "Ошибка обработки запроса."
+    return await render_error_page(request, exc.status_code, detail)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return await render_error_page(request, 422, "Проверьте корректность заполненных данных.")
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: Exception):
+    return await render_error_page(request, 404, "Такой страницы не существует или она была перемещена.")
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    return await render_error_page(request, 500, "Внутренняя ошибка сервера. Попробуйте еще раз.")
+
+
 @app.middleware("http")
 async def base_url_middleware(request: Request, call_next):
     request.state.base_url = get_base_url(request).rstrip("/")
@@ -839,6 +927,9 @@ async def login_post(request: Request, db: DbDep, email: str = Form(""), passwor
         return templates.TemplateResponse(
             "login.html", {"request": request, "errors": errors, "email": email}, status_code=400
         )
+    if not (user.password_hash or "").startswith(f"{PBKDF2_PREFIX}$"):
+        user.password_hash = hash_password(password)
+        await db.commit()
     resp = RedirectResponse("/dashboard", status_code=302)
     set_auth_cookies(resp, user.id)
     return resp
@@ -1641,6 +1732,20 @@ async def play_question(request: Request, code: str, n: int, db: DbDep, feedback
     q = qs[n - 1]
     await db.refresh(q, ["options"])
     opts = [{"id": o.id, "text": o.text} for o in sorted(q.options, key=lambda x: x.id)]
+    feedback_explanation = None
+    if n > 1:
+        prev_q = qs[n - 2]
+        if prev_q.explanation:
+            prev_answer = (
+                await db.execute(
+                    select(UserAnswer).where(
+                        UserAnswer.attempt_id == att.id,
+                        UserAnswer.question_id == prev_q.id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if prev_answer:
+                feedback_explanation = prev_q.explanation
     deadline = await ensure_question_deadline(db, att, quiz, n, q)
     remaining = compute_remaining_seconds(datetime.now(timezone.utc), deadline)
     user = await get_current_user(request, db)
@@ -1661,6 +1766,7 @@ async def play_question(request: Request, code: str, n: int, db: DbDep, feedback
             "timer_total_seconds": max(timer_total, remaining, 1.0),
             "timer_mode": quiz.timer_mode.value,
             "feedback": feedback,
+            "feedback_explanation": feedback_explanation,
             "user": user,
         },
     )
