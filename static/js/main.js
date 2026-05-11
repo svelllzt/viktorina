@@ -247,6 +247,18 @@ function initFormValidation() {
 
 function initEditorPage() {
   initAddQuestionOptionRows();
+  const settingsBtn = document.querySelector(".js-settings-toggle");
+  const settingsForm = document.getElementById("quizSettingsForm");
+  const settingsToolbar = document.getElementById("quizSettingsToolbar");
+  if (settingsBtn && settingsForm && settingsToolbar) {
+    settingsBtn.addEventListener("click", () => {
+      const open = settingsForm.classList.contains("hidden");
+      settingsForm.classList.toggle("hidden", !open);
+      settingsToolbar.classList.toggle("hidden", !open);
+      settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      settingsBtn.textContent = open ? "Скрыть настройки" : "Показать настройки";
+    });
+  }
   const list = document.getElementById("questionList");
   if (list) initEditOptionButtons(list);
   if (!list) return;
