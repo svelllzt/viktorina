@@ -56,8 +56,11 @@
   <div class="alert alert-error show">Добавьте хотя бы один вопрос перед публикацией.</div>
   {% endif %}
   <section class="card card-glass section-block">
-    <h2 class="section-title">Настройки</h2>
-    <form method="post" action="/quiz/{{ quiz.id }}/update" class="form-grid" data-validate="quiz-settings">
+    <div class="layout-inline">
+      <h2 class="section-title">Настройки</h2>
+      <button type="button" class="btn btn-ghost btn-sm js-settings-toggle" aria-expanded="false">Показать настройки</button>
+    </div>
+    <form method="post" action="/quiz/{{ quiz.id }}/update" class="form-grid hidden" data-validate="quiz-settings" id="quizSettingsForm">
       <label class="field span-2">
         <span class="field-label">Название</span>
         <input type="text" name="title" class="input {% if errors.title %}input-invalid{% endif %}" value="{{ quiz.title }}" required maxlength="500">
@@ -94,7 +97,7 @@
         <button type="submit" class="btn btn-primary btn-lg">Сохранить настройки</button>
       </div>
     </form>
-    <div class="toolbar-row">
+    <div class="toolbar-row hidden" id="quizSettingsToolbar">
       <a href="/quiz/{{ quiz.id }}/publish" class="btn btn-accent btn-lg">Опубликовать</a>
       {% if quiz.is_live and quiz.status.value == 'published' %}
       <a href="/quiz/{{ quiz.id }}/live/open" class="btn btn-accent btn-lg">Запустить Live</a>
