@@ -15,7 +15,9 @@
   <article class="card card-lift quiz-card">
     <div class="quiz-card-head">
       <h2 class="quiz-card-title">{{ row.quiz.title }}</h2>
-      <span class="badge badge-{{ row.quiz.status.value }}">{{ row.quiz.status.value }}</span>
+      <span class="badge badge-{{ row.quiz.status.value }}">
+        {% if row.quiz.status.value == 'published' %}опубликована{% elif row.quiz.status.value == 'draft' %}черновик{% elif row.quiz.status.value == 'closed' %}закрыта{% else %}{{ row.quiz.status.value }}{% endif %}
+      </span>
     </div>
     <p class="quiz-card-desc muted">{{ row.quiz.description[:120] }}{% if row.quiz.description|length > 120 %}…{% endif %}</p>
     <dl class="quiz-stats">
